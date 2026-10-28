@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "secondlook"
+version = "0.1.0"
+description = "Take a second look at a suspicious text, chat or email before you tap. Offline, no dependencies."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.8"
+authors = [{name = "Tariq"}]
+keywords = ["scam", "phishing", "security", "sms", "email", "fraud"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Environment :: Console",
+    "Topic :: Security",
+]
+
+[project.scripts]
+secondlook = "secondlook.cli:main"
+
+[tool.setuptools]
+packages = ["secondlook"]

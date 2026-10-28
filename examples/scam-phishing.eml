@@ -1,0 +1,17 @@
+Received: from mail.secure-paypal-billing.top (unknown [203.0.113.7])
+Authentication-Results: mx.example.net; spf=fail smtp.mailfrom=secure-paypal-billing.top; dkim=none; dmarc=fail header.from=paypal.com
+From: "service@paypal.com" <billing@secure-paypal-billing.top>
+Reply-To: helpdesk.paypal@gmail.com
+To: you@example.net
+Subject: Action required: your account has been limited
+Date: Tue, 27 Oct 2026 09:14:00 +0000
+Message-ID: <fake-0001@secure-paypal-billing.top>
+MIME-Version: 1.0
+Content-Type: text/html; charset=utf-8
+
+<html><body>
+<p>Dear Customer,</p>
+<p>We noticed unauthorized activity. Your account has been limited until you confirm your billing information.</p>
+<p><a href="https://paypal-resolution.web.app/confirm">https://www.paypal.com/resolution</a></p>
+<p>If you do not confirm within 48 hours your account will be closed.</p>
+</body></html>
