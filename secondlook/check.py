@@ -4,7 +4,7 @@ from __future__ import annotations
 from . import email_check, language, links
 from . import online as net
 from .data import BRANDS, SHORTENERS
-from .findings import score, verdict
+from .findings import Finding, head_tail, score, verdict
 
 _KNOWN = set().union(*BRANDS.values()) | SHORTENERS
 TEXT_CAP = 200_000  # real messages are a few KB; this keeps hostile giant inputs fast
@@ -20,8 +20,12 @@ def analyze(raw, online=False):
     else:
         text, urls = raw, []
     if len(text) > TEXT_CAP:
-        notes.append("message is very long; only the first {} KB were checked".format(TEXT_CAP // 1000))
-        text = text[:TEXT_CAP]
+        # Fail closed: a giant "message" is itself odd, and the middle goes unread.
+        findings.append(Finding(25, "input.oversized", "Message is far longer than any real one",
+                                "Only its beginning and end were checked. Padding a message "
+                                "with junk is a known way to slip past filters.",
+                                "{:,} characters".format(len(text))))
+        text = head_tail(text, TEXT_CAP)
     urls = list(dict.fromkeys(urls + links.find_urls(text)))
 
     if online:

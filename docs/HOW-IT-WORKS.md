@@ -214,4 +214,5 @@ judged by its address alone.
 - **Hostile input can't hurt the reader.** Control characters and right-to-left
   overrides from a message are printed as `?`, so a message can't repaint your
   terminal or reorder text to hide a warning. Links are normalised the way browsers do
-  it (`" https://…"`, `"java\tscript:"`), and giant inputs are capped at 200 KB of text.
+  it (`" https://…"`, `"java\tscript:"`). Giant inputs are checked at both ends
+  (so padding can't hide a scam) and the oversize itself scores as suspicious.

@@ -8,7 +8,7 @@ from email.utils import getaddresses, parseaddr
 from html.parser import HTMLParser
 
 from . import data
-from .findings import Finding
+from .findings import Finding, head_tail
 from .links import host_of, registrable, skeleton
 
 
@@ -96,7 +96,8 @@ def parse(raw):
 
 def _lying_link(href, label):
     """The text says one address, the link really goes to another."""
-    shown = re.search(r"(?<![\w.-])(?:https?://)?((?:[\w-]+\.)+[a-z]{2,})", label[:_SCAN_CAP], re.I)
+    shown = re.search(r"(?<![\w.-])(?:https?://)?((?:[\w-]+\.)+[a-z]{2,})",
+                      head_tail(label, _SCAN_CAP), re.I)
     if not shown:
         return None
     a, b = registrable(host_of(shown.group(0))), registrable(host_of(href))
@@ -118,7 +119,7 @@ def _sender_checks(msg):
     from_dom = _domain(addr)
 
     # Display-name tricks: "PayPal Security <x@random.top>" or "service@paypal.com <x@random.top>"
-    display = display[:_SCAN_CAP]
+    display = head_tail(display, _SCAN_CAP)
     inner = re.search(r"(?<![\w.+-])[\w.+-]+@([\w-]+\.[\w.-]+)", display)
     if inner and from_dom and registrable(inner.group(1).lower()) != registrable(from_dom):
         out.append(Finding(45, "email.fake-display-address",

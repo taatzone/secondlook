@@ -27,6 +27,14 @@ class Finding:
         return asdict(self)
 
 
+def head_tail(s, cap):
+    """Keep both ends of an oversized string, so padding at the front can't push the
+    real content past the cut."""
+    if len(s) <= cap:
+        return s
+    return s[:cap * 3 // 4] + "\n" + s[-(cap // 4):]
+
+
 def score(findings):
     return sum(f.points for f in findings)
 

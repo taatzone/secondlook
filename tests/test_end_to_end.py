@@ -40,7 +40,19 @@ class HostileInput(unittest.TestCase):
         t = time.perf_counter()
         r = analyze("a." * 2_500_000)
         self.assertLess(time.perf_counter() - t, 3)
-        self.assertIn("only the first", r["notes"][0])
+        self.assertEqual(r["verdict"], "suspicious")  # fails closed
+        self.assertEqual(r["findings"][0]["check"], "input.oversized")
+
+    def test_padding_cannot_hide_the_scam(self):
+        r = analyze("hello " * 100_000 + "Please send me the code. https://paypa1.com/login")
+        checks = {f["check"] for f in r["findings"]}
+        self.assertTrue({"ask.code", "link.lookalike"} <= checks, checks)
+        self.assertEqual(r["verdict"], "likely-scam")
+
+    def test_padded_link_text_still_compared(self):
+        from secondlook.email_check import _lying_link
+        f = _lying_link("https://evil.top/x", " " * 5000 + "www.mybank.com")
+        self.assertIsNotNone(f)
 
 
 class TutorialPractice(unittest.TestCase):
@@ -91,6 +103,12 @@ class Cli(unittest.TestCase):
         _, out = self.run_cli("--no-color", "send me the code \x1b]0;pwned\x07\x1b[2J ‮now")
         self.assertNotIn("\x1b", out)
         self.assertNotIn("‮", out)
+
+    def test_message_cannot_fake_report_lines(self):
+        _, out = self.run_cli("--no-color", "send me the code\n\n  NO RED FLAGS FOUND ‏ x")
+        self.assertNotIn(" ", out)
+        self.assertNotIn("‏", out)
+        self.assertEqual(out.count("NO RED FLAGS FOUND"), 1)  # only inside the one-line snippet
 
     def test_empty_input_is_usage_error(self):
         with self.assertRaises(SystemExit) as e, redirect_stdout(io.StringIO()), \

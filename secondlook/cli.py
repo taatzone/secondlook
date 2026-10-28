@@ -35,13 +35,14 @@ ADVICE = {
 }
 
 
-# Control characters and bidi overrides from a message could repaint the terminal or
-# reorder text to hide a warning, so they are shown as "?" instead.
-_UNSAFE = re.compile("[\x00-\x09\x0b-\x1f\x7f-\x9f‪-‮⁦-⁩]")
+# Control characters, bidi overrides and direction marks from a message could repaint
+# the terminal or reorder text to hide a warning, so they are shown as "?". Line breaks
+# are collapsed so a message can't fake extra lines of our report.
+_UNSAFE = re.compile("[\x00-\x08\x0e-\x1f\x7f-\x9f‎‏؜‪-‮⁦-⁩]")
 
 
 def _safe(s):
-    return _UNSAFE.sub("?", s)
+    return " ".join(_UNSAFE.sub("?", s).split())
 
 
 def _color(enabled):
