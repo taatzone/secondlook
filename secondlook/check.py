@@ -7,6 +7,7 @@ from .data import BRANDS, SHORTENERS
 from .findings import score, verdict
 
 _KNOWN = set().union(*BRANDS.values()) | SHORTENERS
+TEXT_CAP = 200_000  # real messages are a few KB; this keeps hostile giant inputs fast
 
 
 def analyze(raw, online=False):
@@ -16,9 +17,12 @@ def analyze(raw, online=False):
     if is_email:
         found, text, urls = email_check.parse(raw)
         findings += found
-        urls = list(dict.fromkeys(urls + links.find_urls(text)))
     else:
-        text, urls = raw, links.find_urls(raw)
+        text, urls = raw, []
+    if len(text) > TEXT_CAP:
+        notes.append("message is very long; only the first {} KB were checked".format(TEXT_CAP // 1000))
+        text = text[:TEXT_CAP]
+    urls = list(dict.fromkeys(urls + links.find_urls(text)))
 
     if online:
         resolved = []

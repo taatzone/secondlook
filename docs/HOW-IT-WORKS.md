@@ -165,6 +165,7 @@ and styles dropped), and every `<a href>` is collected along with the text it sh
 | Check | Points | What it reads |
 |---|---|---|
 | `email.link-mismatch` | 45 | link text shows `www.paypal.com` but `href` goes elsewhere |
+| `email.code-link` | 40 | a `javascript:`, `data:`, `vbscript:` or `file:` link: it runs code, not a website |
 | `email.fake-display-address` | 45 | `"service@paypal.com" <x@evil.top>`: the *name* is an address |
 | `email.brand-name-wrong-sender` | 40 | `PayPal Security <x@evil.top>` |
 | `email.auth-failed` | 40 | `Authentication-Results` shows SPF, DKIM or DMARC failing |
@@ -210,3 +211,7 @@ judged by its address alone.
   `examples/genuine-*` must have *no red flags*.
 - **The tutorial is truthful.** The practice answers in `TUTORIAL.md` are a test.
 - **Never says "safe".** Asserted on the output.
+- **Hostile input can't hurt the reader.** Control characters and right-to-left
+  overrides from a message are printed as `?`, so a message can't repaint your
+  terminal or reorder text to hide a warning. Links are normalised the way browsers do
+  it (`" https://…"`, `"java\tscript:"`), and giant inputs are capped at 200 KB of text.

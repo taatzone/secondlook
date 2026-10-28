@@ -34,6 +34,15 @@ class Examples(unittest.TestCase):
                 self.assertEqual(r["verdict"], "no-red-flags", (path.name, r["findings"]))
 
 
+class HostileInput(unittest.TestCase):
+    def test_giant_input_is_capped_and_fast(self):
+        import time
+        t = time.perf_counter()
+        r = analyze("a." * 2_500_000)
+        self.assertLess(time.perf_counter() - t, 3)
+        self.assertIn("only the first", r["notes"][0])
+
+
 class TutorialPractice(unittest.TestCase):
     """docs/TUTORIAL.md publishes these answers; keep the tool honest to them."""
 
@@ -77,6 +86,11 @@ class Cli(unittest.TestCase):
         _, out = self.run_cli("--no-color", "see you at dinner")
         self.assertIn("NO RED FLAGS FOUND", out)
         self.assertIn("does NOT mean it is safe", out)
+
+    def test_terminal_control_characters_are_neutralised(self):
+        _, out = self.run_cli("--no-color", "send me the code \x1b]0;pwned\x07\x1b[2J ‮now")
+        self.assertNotIn("\x1b", out)
+        self.assertNotIn("‮", out)
 
     def test_empty_input_is_usage_error(self):
         with self.assertRaises(SystemExit) as e, redirect_stdout(io.StringIO()), \

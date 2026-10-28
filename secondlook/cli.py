@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 
 from . import __version__
@@ -34,6 +35,15 @@ ADVICE = {
 }
 
 
+# Control characters and bidi overrides from a message could repaint the terminal or
+# reorder text to hide a warning, so they are shown as "?" instead.
+_UNSAFE = re.compile("[\x00-\x09\x0b-\x1f\x7f-\x9f‪-‮⁦-⁩]")
+
+
+def _safe(s):
+    return _UNSAFE.sub("?", s)
+
+
 def _color(enabled):
     def c(code, s):
         return "\033[{}m{}\033[0m".format(code, s) if enabled else s
@@ -47,13 +57,13 @@ def render(report, color=False):
              "  (score {}, {} checked)".format(report["score"], report["kind"]), ""]
     for f in report["findings"]:
         bar = "!!!" if f["points"] >= 40 else "!! " if f["points"] >= 20 else "!  "
-        lines.append("  {} {}".format(c(tone, bar), c("1", f["title"])))
-        lines.append("      " + f["why"])
+        lines.append("  {} {}".format(c(tone, bar), c("1", _safe(f["title"]))))
+        lines.append("      " + _safe(f["why"]))
         if f["evidence"]:
-            lines.append("      " + c("2", "seen: " + f["evidence"]))
+            lines.append("      " + c("2", "seen: " + _safe(f["evidence"])))
         lines.append("")
     for n in report["notes"]:
-        lines.append("  " + c("2", "note: " + n))
+        lines.append("  " + c("2", "note: " + _safe(n)))
     if report["notes"]:
         lines.append("")
     lines.append("  " + c("1", "What to do:"))

@@ -12,6 +12,10 @@ from .findings import Finding
 from .links import host_of, registrable, skeleton
 
 
+_CODE_SCHEMES = {"javascript", "vbscript", "data", "file"}
+_SCAN_CAP = 500  # link texts and sender names longer than this are not honest ones anyway
+
+
 def looks_like_email(raw):
     head = raw.lstrip()[:2000]
     return bool(re.search(r"^(from|received|return-path|message-id|delivered-to):", head, re.I | re.M))
@@ -68,11 +72,21 @@ def parse(raw):
             p.feed(body)
             texts.append("".join(p.text))
             for href, label in p.anchors:
-                if href and href.lower().startswith(("http://", "https://")):
+                # Browsers strip edge spaces/controls and drop tabs and newlines, so
+                # " https://evil" and "java\tscript:" must be read the same way here.
+                href = re.sub(r"^[\x00-\x20]+|[\x00-\x20]+$|[\t\n\r]", "", href or "")
+                scheme = href.split(":", 1)[0].lower() if ":" in href else ""
+                if scheme in ("http", "https"):
                     links.append(href)
                     f = _lying_link(href, label)
                     if f:
                         findings.append(f)
+                elif scheme in _CODE_SCHEMES:
+                    findings.append(Finding(
+                        40, "email.code-link", "A link runs code instead of opening a website",
+                        "This '{}:' link doesn't go to a website at all: it runs script or "
+                        "opens content hidden inside the email. Normal emails never need "
+                        "that.".format(scheme), href[:120]))
         else:
             texts.append(body)
 
@@ -82,7 +96,7 @@ def parse(raw):
 
 def _lying_link(href, label):
     """The text says one address, the link really goes to another."""
-    shown = re.search(r"(?:https?://)?((?:[\w-]+\.)+[a-z]{2,})", label, re.I)
+    shown = re.search(r"(?<![\w.-])(?:https?://)?((?:[\w-]+\.)+[a-z]{2,})", label[:_SCAN_CAP], re.I)
     if not shown:
         return None
     a, b = registrable(host_of(shown.group(0))), registrable(host_of(href))
@@ -104,7 +118,8 @@ def _sender_checks(msg):
     from_dom = _domain(addr)
 
     # Display-name tricks: "PayPal Security <x@random.top>" or "service@paypal.com <x@random.top>"
-    inner = re.search(r"[\w.+-]+@([\w-]+\.[\w.-]+)", display)
+    display = display[:_SCAN_CAP]
+    inner = re.search(r"(?<![\w.+-])[\w.+-]+@([\w-]+\.[\w.-]+)", display)
     if inner and from_dom and registrable(inner.group(1).lower()) != registrable(from_dom):
         out.append(Finding(45, "email.fake-display-address",
                            "Sender name contains a different email address",

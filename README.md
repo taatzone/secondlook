@@ -134,7 +134,7 @@ secondlook/
   check.py        runs everything and builds the report
   cli.py          the command and the human-friendly output
 examples/         real-shaped scam and genuine messages; every one is a test
-tests/            42 tests, standard library only
+tests/            46 tests, standard library only
 docs/             tutorial, how it works, scam field guide, extending
 ```
 
